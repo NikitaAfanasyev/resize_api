@@ -10,7 +10,6 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg'])
 conn = psycopg2.connect(dbLogin)
 cursor = conn.cursor()
 
-print(cursor.execute(f"select status from resizejobs where jobID={jobID}"))
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -44,6 +43,9 @@ def imageUpload():
         return (jsonify({
         "success": True
     }))
+    else:
+        return abort(make_response(jsonify(message="формат файла не поддерживается"), 400))
+
 
 
 @app.route("/resize", methods=['POST'])
@@ -61,7 +63,7 @@ def resize():
     if jobID is None:
         return abort(500)
     conn.commit()
-    cropImage.delay(width, height, os.path.join(app.config['UPLOAD_FOLDER'], imageName))
+    cropImage.delay(width, height, imageName, jobID)
     return (jsonify({
         "jobID": jobID
     }))
